@@ -2,10 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-import requests
-from bs4 import BeautifulSoup
-import firebase_admin
-from firebase_admin import credentials, firestore
 import os
 from dotenv import load_dotenv
 
@@ -112,7 +108,7 @@ async def scrape_garages():
         # soup = BeautifulSoup(response.content, 'html.parser')
         
         return {
-            "message": "Garage information updated",
+            "message": "Garage inforx`mation updated",
             "garages_scraped": len(sample_garages)
         }
     except Exception as e:

@@ -11,14 +11,17 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import axios from 'axios';
+import { supabase } from '../services/supabase';
 
 const Stack = createStackNavigator();
 
 // Home Screen Component
 function HomeScreen({ navigation }) {
+  const [garages,setGarages] = useState([]);
   const [building, setBuilding] = useState('');
   const [loading, setLoading] = useState(false);
 
