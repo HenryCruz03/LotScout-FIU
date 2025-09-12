@@ -7,6 +7,7 @@ export const styles = StyleSheet.create({
     padding: 20,
     height: '100%',
     width: '100%',
+    flexDirection: 'column',
   },
   title: {
     fontSize: 32,
@@ -38,6 +39,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#3498db',
     padding: 15,
     borderRadius: 10,
+    width: 200,
     alignItems: 'center',
   },
   buttonText: {
@@ -122,4 +124,19 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  cardContainer: {
+    width: '100%',
+    flexDirection: "column",
+    alignItems: "center",
+    backgroundColor: "#f0f4ff", // light blue background
+    borderRadius: 12,          // rounded corners
+    borderWidth: 2,            // thicker border
+    borderColor: "#a6a6a6",       // border color
+    padding: 12,               // spacing inside
+    marginVertical: 8,         // spacing between items
+    shadowColor: "#000",       // subtle shadow
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  }
 });
