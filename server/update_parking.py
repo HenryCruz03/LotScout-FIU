@@ -1,76 +1,100 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
-from bs4 import BeautifulSoup
-from  services.supabase import supabase
+from services.supabase import supabase
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+import time
 
 def get_parking_data():
-    location_lookup= {
-        "PG1: Gold Parking Garage": (25.754583796141546, -80.37218471436944),
-        "PG2: Blue Parking Garage": (25.75423394600492, -80.37237634252237),
-        "PG3: Panther Parking Garage":(25.758865523845564, -80.3797709571502),
-        "PG4: Red Parking Garage":(25.760251692129792, -80.37318096140726),
+    location_lookup = {
+        "PG1: Gold Garage":   (25.754583796141546, -80.37218471436944),
+        "PG2: Blue Garage":   (25.75423394600492,  -80.37237634252237),
+        "PG3: Panther Garage":(25.758865523845564, -80.3797709571502),
+        "PG4: Red Garage":    (25.760251692129792, -80.37318096140726),
         "PG5: Market Station":(25.760364737503448, -80.37107850986386),
-        "PG6: Tech Building":(25.760294084156044, -80.37460874566301),
-        "Lot 3":(25.755202221297864, -80.37057324756857),
-        "Lot 5":(25.752790232472076, -80.37089269984861),
-        "Lot 7":(25.752923404867392, -80.38047511424715),
-        "Lot 9":(25.758932468756335, -80.37821191491454)
+        "PG6: Tech Station":  (25.760294084156044, -80.37460874566301),
+        "Lot 1": (25.755202221297864, -80.37057324756857),
+        "Lot 3": (25.758932468756335, -80.37821191491454),
+        "Lot 5": (25.752790232472076, -80.37089269984887),
+        "Lot 7": (25.752923404867392, -80.38047511424715),
+        "Lot 9": (25.758932468756335, -80.37821191491454),
+        "Lot 10": (25.7570975212894, -80.38127636614678),
     }
-    url ="https://operations.fiu.edu/parking/space-availability/"
 
-    resp=requests.get(url,timeout=10)
-    if resp.status_code != 200:
-        print("Error fetching the page:", resp.status_code)
-        return
-    
-    soup= BeautifulSoup(resp.text,'html.parser')
-    widget= soup.find("div",id="parking-widget")
-    if not widget:
-        print("Error: Parking widget not found on the page.")
-        return
-    items= widget.select("ul.parking-widget-data li[data-label]")
-    print(f"found {len(items)} rows to process")
-    
-    for li in items:
-        garage_name= li['data-label'].strip()
-        student_spaces= None
-        for block in li.select("div.donut-content"):
-            num_text=block.find("strong").text.strip()
-            desc=block.find("span").text.strip().lower()
-            if "student" in desc:
-                    if num_text.lower() in ["full","0"]:
-                        student_spaces=0
-                        print(f"Student spaces full in {garage_name}")
-                    else:
-                        try:
-                                student_spaces=int(num_text)
-                        except ValueError:
-                                print(f"Unexpected student spaces available:'{num_text}'" )
-                                student_spaces=0
+    chrome_opts = Options()
+    chrome_opts.add_argument("--headless")
+    chrome_opts.add_argument("--no-sandbox")
+    chrome_opts.add_argument("--disable-dev-shm-usage")
+
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_opts)
+
+    try:
+        driver.get("https://operations.fiu.edu/parking/space-availability/")
+        wait = WebDriverWait(driver, 15)
+        wait.until(EC.presence_of_element_located((By.ID, "parking-widget")))
+        time.sleep(3)
+
+        def scrape_section(section_id, search_keywords):
+            section = driver.find_element(By.ID, section_id)
+            items = section.find_elements(By.CSS_SELECTOR, "ul.parking-widget-data li[data-label]")
             
-        lat,lng= location_lookup.get(garage_name,(None,None))
-        timestamp=datetime.utcnow().isoformat()
-        if student_spaces is None:
-            print(f"Skipping {garage_name} due to missing student spaces data")
-            continue
-     
-        
-        data= {
-        "garage_name": garage_name,
-        "student_spaces": student_spaces,
-        "location_lat": lat,
-        "location_lng":lng,
-        "updated_at": timestamp
-    }
-    # Insert into Supabase table
-        try:    
-            supabase.table("parking_garages").upsert(data,on_conflict=["garage_name"]).execute()
-            if student_spaces ==0:
-                print(f"{timestamp}: {garage_name} - Student Spaces Full")
-            else:
-             print(f"{timestamp}: {garage_name} - {student_spaces} Student Spaces Available")
-        except Exception as e:
-            print(f"Error inserting data for {garage_name}: {e}")
-            
+            for item in items:
+                label = item.get_attribute("data-label")
+                blocks = item.find_elements(By.CSS_SELECTOR, "div.donut-content")
+                value = None
+
+                for b in blocks:
+                    try:
+                        num_text = b.find_element(By.TAG_NAME, "strong").text.strip()
+                        span = b.find_element(By.TAG_NAME, "span")
+                        span_text = span.text.strip().lower() if span else ''
+
+                        # Grab *either* garages student spaces or lots available spaces
+                        if any(keyword in span_text for keyword in search_keywords) or num_text.lower() == "full":
+                            value = 0 if num_text.lower() == "full" else int(num_text)
+                            break
+
+                    except Exception as e:
+                        continue
+
+                if value is None:
+                    print(f"❌ {label}: could not parse a count using {search_keywords}")
+                    continue
+
+                lat, lng = location_lookup.get(label, (None, None))
+                timestamp = datetime.utcnow().isoformat()
+
+                record = {
+                    "garage_name": label,
+                    "student_spaces": value,
+                    "location_lat": lat,
+                    "location_lng": lng,
+                    "updated_at": timestamp
+                }
+
+                try:
+                    supabase.table("parking_garages") \
+                        .upsert(record, on_conflict=["garage_name"]) \
+                        .execute()
+                    print(f"💾 Saved {label}: {value} spaces")
+                except Exception as db_err:
+                    print(f"❌ DB error for {label}: {db_err}")
+
+        # Both garages and lots: parse for *either* "student" or "available"
+        keywords = ["student", "available", "spaces"]
+        print("🚗 Scraping all garages and lots using unified logic...")
+        scrape_section("parking-widget", keywords)
+        scrape_section("parking-lots-widget", keywords)
+
+        print("🎉 All done!")
+
+    finally:
+        driver.quit()
+
 if __name__ == "__main__":
     get_parking_data()

@@ -1,3 +1,7 @@
+
+
+
+
 export const buildings = {
 
     "SIPA2": {name: "School of International & Public Affairs 2",latitude:25.756542813909252,longitude:80.37662691362861},
@@ -32,12 +36,3 @@ export const buildings = {
     "AHC5":{name:"Academic Health Center 5",latitude:25.759191485245964, longitude: -80.37116465014205},
 };
 
-export const garages = [
-{
-    id: "PG1",
-    name:"Parking Garage 1",
-    latitude:,
-    longitude:,
-    total
-}
-]
