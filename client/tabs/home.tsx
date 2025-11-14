@@ -15,8 +15,9 @@ import {
 } from "react-native";
 import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
+import { useRootStore } from "../store/RootStoreProvider";
 
-const buildings = [
+const exampleBuildings = [
   { acronym: "AHC1", full_name: "Academic Health Center 1" },
   { acronym: "AHC2", full_name: "Academic Health Center 2" },
   { acronym: "AHC3", full_name: "Academic Health Center 3" },
@@ -109,7 +110,7 @@ const buildings = [
 let acronymMap = {};
 let nameMap = {};
 
-for (let b of buildings) {
+for (let b of exampleBuildings) {
   acronymMap[b.acronym.toLowerCase()] = b;
   nameMap[b.full_name.toLowerCase()] = b;
 }
@@ -127,6 +128,13 @@ export default function HomeScreen({ navigation }) {
   const [searchResult, setSearchResult] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [loading, setLoading] = useState(null);
+
+  // Get the view store
+  const { lotScoutViewStore } = useRootStore();
+  const {
+    buildings,
+    fetchBuildings
+  } = lotScoutViewStore;
 
   const searchBuilding = () => {
     if (!searchQuery) {
@@ -280,7 +288,7 @@ export default function HomeScreen({ navigation }) {
                     </Text>
                   </Pressable>
                 ))
-              : buildings.map((building, idx) => (
+              : exampleBuildings.map((building, idx) => (
                   <Pressable
                     key={`${building.acronym}-${idx}`}
                     style={styles.cardContainer}
