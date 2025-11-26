@@ -133,8 +133,12 @@ export default function HomeScreen({ navigation }) {
   const { lotScoutViewStore } = useRootStore();
   const {
     buildings,
-    fetchBuildings
+    fetchBuildings,
+    fetchGarages
   } = lotScoutViewStore;
+
+  fetchBuildings();
+  fetchGarages();
 
   const searchBuilding = () => {
     if (!searchQuery) {
