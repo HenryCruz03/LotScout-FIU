@@ -4,11 +4,12 @@ import HomeScreen from './tabs/home'
 import GaragesScreen from './tabs/garages';
 import MapScreen from './tabs/map';
 import { RootStoreProvider } from './store/RootStoreProvider';
+import { observer } from 'mobx-react';
 
 const Stack = createStackNavigator();
 
 // Main App Component
-export default function App() {
+const App = (() => {
   return (
     <RootStoreProvider>
       <NavigationContainer>
@@ -32,4 +33,6 @@ export default function App() {
       </NavigationContainer>
     </RootStoreProvider>
   );
-}
+});
+
+export default App
