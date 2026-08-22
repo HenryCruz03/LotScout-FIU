@@ -16,8 +16,8 @@ interface parking_garages {
   full_name: string;
   imageId: string;
   student_spaces: number;
-  latitude: number;
-  longitude: number;
+  location_lat: number;
+  location_lng: number;
 }
 
 function haversineDistance(
@@ -85,8 +85,10 @@ export class LoutScoutViewStore {
       const { data, error } = await this.supabase.from("parking_garages").select("*").order("acronym",{ ascending: true});
       if (error) throw error;
       this.garages = data || [];
-      console.log(this.garages)
+      console.log("garages")
+      console.log("garages: ", this.garages)
     } catch (error) {
+      console.log(error)
       runInAction(() => {
         this.garages = [];
       });
@@ -95,13 +97,15 @@ export class LoutScoutViewStore {
 
 get garagesWithDistances() {
     if (!this.selectedBuilding) return [];
+    console.log(this.selectedBuilding.full_name)
+    console.log("calculating garages distances")
     return this.garages.map((garage) => ({
       ...garage,
       distance: haversineDistance(
         this.selectedBuilding.latitude,
         this.selectedBuilding.longitude,
-        garage.latitude,
-        garage.longitude
+        garage.location_lat,
+        garage.location_lng
       ),
     }));
   }
