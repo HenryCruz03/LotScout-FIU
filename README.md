@@ -15,13 +15,12 @@ An iOS app that helps FIU students find parking near their classes by inputting 
 ### Frontend
 - **React Native** with Expo CLI
 - **React Navigation** for screen navigation
-- **Google Maps API** for map integration
 - **Axios** for API calls
 - **Expo Location** for GPS functionality
 
 ### Backend
 - **Python FastAPI** for the API server
-- **Firebase** for data storage and authentication
+- **Supabase** for data storage and authentication
 - **BeautifulSoup** for web scraping garage data
 - **Uvicorn** as the ASGI server
 
